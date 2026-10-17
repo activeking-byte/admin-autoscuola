@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Autoscuola Milano Nord</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #F0F4F8; color: #1A202C; font-size: 15px; line-height: 1.5; }
+
+/* ── LOGIN overlay ── */
+#loginOverlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: #1E3A5F;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.lcard {
+  background: #fff; border-radius: 18px; padding: 40px 36px;
+  width: 100%; max-width: 360px; text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.llogo {
+  width: 52px; height: 52px; background: #F2BE2C; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 20px; color: #1E3A5F; margin-bottom: 18px;
+}
+.lcard h2 { font-size: 20px; font-weight: 800; color: #1A202C; margin-bottom: 4px; }
+.lcard .lsub { color: #64748B; font-size: 13px; margin-bottom: 26px; }
+.linput {
+  width: 100%; border: 1.5px solid #E2E8F0; border-radius: 10px;
+  padding: 12px 14px; font-size: 15px; color: #1A202C;
+  font-family: inherit; outline: none; margin-bottom: 10px; display: block;
+  transition: border-color .2s; background: #F8FAFC;
+}
+.linput:focus { border-color: #1E3A5F; background: #fff; }
+.lbtn {
+  width: 100%; background: #1E3A5F; color: #fff;
+  border: none; padding: 13px; border-radius: 10px;
+  font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; margin-top: 4px;
+}
+.lbtn:hover { background: #2A4F7E; }
+.lerr { color: #DC2626; font-size: 13px; margin-top: 8px; min-height: 20px; }
+.lhint { font-size: 12px; color: #94A3B8; margin-top: 14px; }
+.lhint strong { color: #F2BE2C; }
+
+/* ── DASHBOARD ── */
+#dashboard { display: none; }
+.topbar {
+  background: #1E3A5F; color: #fff; padding: 0 24px;
+  position: sticky; top: 0; z-index: 10;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.tb-inner {
+  max-width: 1200px; margin: 0 auto; height: 58px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.tb-logo { display: flex; align-items: center; gap: 10px; }
+.tb-icon { width: 30px; height: 30px; background: #F2BE2C; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; color: #1E3A5F; }
+.tb-name { font-weight: 700; font-size: 15px; }
+.tb-name em { color: #F2BE2C; font-style: normal; }
+.tb-right { display: flex; align-items: center; gap: 10px; }
+.adm-badge { background: rgba(242,190,44,.2); color: #F2BE2C; border: 1px solid rgba(242,190,44,.35); padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.logout-btn { background: rgba(255,255,255,.1); color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.logout-btn:hover { background: rgba(255,255,255,.18); }
+
+.main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 60px; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+.stat { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px 22px; }
+.stat-n { font-size: 34px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+.stat-l { font-size: 13px; color: #64748B; }
+.c-ora { color: #D97706; } .c-grn { color: #16A34A; } .c-blu { color: #1E3A5F; }
+
+/* tabs */
+.tabbar { display: flex; gap: 3px; background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 4px; width: fit-content; margin-bottom: 22px; }
+.tab { padding: 8px 20px; border-radius: 9px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: #64748B; font-family: inherit; transition: all .18s; }
+.tab.on { background: #1E3A5F; color: #fff; }
+
+/* filters */
+.sh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.sh h3 { font-size: 17px; font-weight: 700; }
+.filters { display: flex; gap: 7px; flex-wrap: wrap; }
+.fc { background: #F1F5F9; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 6px 13px; font-size: 13px; font-weight: 600; cursor: pointer; color: #64748B; font-family: inherit; transition: all .18s; }
+.fc.on { border-color: #1E3A5F; color: #1E3A5F; background: #EEF2FF; }
+
+/* booking cards */
+.bklist { display: flex; flex-direction: column; gap: 10px; }
+.bkcard { background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; transition: box-shadow .15s; }
+.bkcard:hover { box-shadow: 0 2px 10px rgba(0,0,0,.07); }
+.bkinfo { flex: 1; min-width: 160px; }
+.bkname { font-weight: 700; font-size: 15px; margin-bottom: 4px; color: #1A202C; }
+.bkmeta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 13px; color: #64748B; }
+.svc-tag { background: #EEF2FF; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #1E3A5F; }
+.note-prev { color: #D97706; font-size: 12px; font-style: italic; }
+.bkdt { margin-left: auto; text-align: right; flex-shrink: 0; }
+.bkdate { font-size: 13px; font-weight: 600; color: #1A202C; margin-bottom: 3px; }
+.bktime { font-size: 13px; color: #64748B; margin-bottom: 6px; }
+.sbadge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.s-pending   { background: #FEF3C7; color: #D97706; }
+.s-confirmed { background: #DCFCE7; color: #16A34A; }
+.s-cancelled { background: #FEE2E2; color: #DC2626; }
+.bkactions { display: flex; gap: 7px; flex-shrink: 0; }
+.ab { padding: 7px 13px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: opacity .15s; }
+.ab:hover { opacity: .8; }
+.ab-conf { background: #DCFCE7; color: #16A34A; }
+.ab-canc { background: #FEE2E2; color: #DC2626; }
+.ab-rest { background: #DCFCE7; color: #16A34A; }
+.ab-note { background: #F1F5F9; color: #64748B; }
+.empty { text-align: center; padding: 52px; color: #94A3B8; font-size: 14px; background: #fff; border-radius: 12px; border: 1px solid #E2E8F0; }
+
+/* disponibilità */
+.avail-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 10px; }
+.day-col { background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; }
+.day-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.day-name { font-size: 13px; font-weight: 700; color: #1A202C; }
+.day-date { font-size: 11px; color: #94A3B8; margin-top: 2px; }
+.tgl { position: relative; width: 36px; height: 20px; flex-shrink: 0; cursor: pointer; }
+.tgl input { opacity: 0; width: 0; height: 0; position: absolute; }
+.ttr { position: absolute; inset: 0; background: #E2E8F0; border-radius: 10px; transition: .2s; }
+.ttr::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #94A3B8; border-radius: 50%; transition: .2s; }
+.tgl input:checked ~ .ttr { background: #16A34A; }
+.tgl input:checked ~ .ttr::before { transform: translateX(16px); background: #fff; }
+.slots { display: flex; flex-direction: column; gap: 5px; }
+.sc { padding: 6px 4px; border-radius: 7px; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; border: 1.5px solid #E2E8F0; background: #F8FAFC; color: #1A202C; transition: all .15s; user-select: none; }
+.sc.active { border-color: #1E3A5F; background: #EEF2FF; color: #1E3A5F; }
+.sc.inactive { opacity: .35; text-decoration: line-through; color: #94A3B8; }
+.day-col.closed .slots { opacity: .3; pointer-events: none; }
+.savebar { background: #fff; border: 1px solid #E2E8F0; border-radius: 13px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.savetxt { font-size: 13px; color: #64748B; }
+.savebtn { background: #1E3A5F; color: #fff; border: none; padding: 10px 22px; border-radius: 9px; font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+.savebtn:hover { background: #2A4F7E; }
+
+/* note modal */
+#noteModal { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+#noteModal.open { display: flex; }
+.notebox { background: #fff; border-radius: 16px; padding: 26px; max-width: 380px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,.15); }
+.notebox h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; color: #1A202C; }
+.notebox p { color: #64748B; font-size: 14px; margin-bottom: 14px; }
+.notebox textarea { width: 100%; border: 1.5px solid #E2E8F0; border-radius: 10px; padding: 12px; font-size: 14px; color: #1A202C; font-family: inherit; resize: none; height: 90px; outline: none; display: block; background: #F8FAFC; }
+.notebox textarea:focus { border-color: #1E3A5F; }
+.noteft { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+.nbb { padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; }
+.nbc { background: #F1F5F9; color: #64748B; }
+.nbs { background: #1E3A5F; color: #fff; }
+
+@media (max-width: 900px) { .stats { grid-template-columns: repeat(2,1fr); } .avail-grid { grid-template-columns: repeat(3,1fr); } }
+@media (max-width: 600px) { .stats { grid-template-columns: 1fr 1fr; } .avail-grid { grid-template-columns: repeat(2,1fr); } .bkcard { flex-direction: column; align-items: flex-start; } .bkdt { margin-left: 0; text-align: left; } }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginOverlay">
+  <div class="lcard">
+    <div class="llogo">AM</div>
+    <h2>Pannello Admin</h2>
+    <p class="lsub">Autoscuola Milano Nord</p>
+    <input class="linput" type="text" id="lUser" placeholder="Username">
+    <input class="linput" type="password" id="lPwd" placeholder="Password">
+    <button class="lbtn" id="lBtn">Accedi</button>
+    <div class="lerr" id="lerr"></div>
+    <p class="lhint">Demo — username <strong>admin</strong> &nbsp;·&nbsp; password <strong>1234</strong></p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="tb-inner">
+      <div class="tb-logo">
+        <div class="tb-icon">AM</div>
+        <div class="tb-name">Autoscuola <em>Milano Nord</em></div>
+      </div>
+      <div class="tb-right">
+        <span class="adm-badge">⚙️ Pannello Admin</span>
+        <button class="logout-btn" id="logoutBtn">Esci</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats">
+      <div class="stat"><div class="stat-n c-ora" id="stPending">0</div><div class="stat-l">In attesa</div></div>
+      <div class="stat"><div class="stat-n c-grn" id="stToday">0</div><div class="stat-l">Confermate oggi</div></div>
+      <div class="stat"><div class="stat-n c-blu" id="stWeek">0</div><div class="stat-l">Questa settimana</div></div>
+      <div class="stat"><div class="stat-n" id="stTotal">0</div><div class="stat-l">Totale prenotazioni</div></div>
+    </div>
+
+    <div class="tabbar">
+      <button class="tab on" data-tab="book">📋 Prenotazioni</button>
+      <button class="tab" data-tab="avail">📅 Disponibilità</button>
+    </div>
+
+    <div id="tabBook">
+      <div class="sh">
+        <h3>Prenotazioni ricevute</h3>
+        <div class="filters">
+          <button class="fc on" data-filter="all">Tutte</button>
+          <button class="fc" data-filter="pending">In attesa</button>
+          <button class="fc" data-filter="confirmed">Confermate</button>
+          <button class="fc" data-filter="cancelled">Cancellate</button>
+        </div>
+      </div>
+      <div class="bklist" id="bkList"></div>
+    </div>
+
+    <div id="tabAvail" style="display:none">
+      <div class="sh" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <h3>Gestione disponibilità orari</h3>
+        <p style="font-size:13px;color:#64748B">Toggle = apri/chiudi giorno. Clic sullo slot = disponibile / non disponibile.</p>
+      </div>
+      <div class="avail-grid" id="availGrid"></div>
+      <div class="savebar">
+        <span class="savetxt" id="saveTxt">Modifica gli orari e salva</span>
+        <button class="savebtn" id="saveBtn">💾 Salva modifiche</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div id="noteModal">
+  <div class="notebox">
+    <h3>Nota interna</h3>
+    <p>Visibile solo nel pannello admin.</p>
+    <textarea id="noteTxt" placeholder="Es. Preferisce essere richiamato dopo le 18..."></textarea>
+    <div class="noteft">
+      <button class="nbb nbc" id="noteCancelBtn">Annulla</button>
+      <button class="nbb nbs" id="noteSaveBtn">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+  const WD = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  const ALL_SLOTS = ['08:30','09:00','09:30','10:00','10:30','11:00','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+
+  function today() { return new Date().toISOString().slice(0,10); }
+  function addDays(n) { var d = new Date(); d.setDate(d.getDate()+n); return d; }
+  function fmtDate(ds) {
+    var d = new Date(ds + 'T12:00:00');
+    return WD[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1);
+  }
+
+  // ── MOCK DATA ──
+  function makeMockBookings() {
+    var names = ['Marco Rossi','Giulia Ferrari','Luca Bianchi','Sara Conti','Andrea Marini','Elena Ricci','Davide Greco','Francesca Neri'];
+    var tels  = ['340 123 4567','339 765 4321','347 234 5678','335 876 5432','348 345 6789','342 987 6543','346 456 7890','338 654 3210'];
+    var svcs  = ['Patente B','Patente A/A2','Recupero Punti','Patente AM','Lezione Extra','Rinnovo Patente','Patente B','Patente A/A2'];
+    var sts   = ['pending','pending','pending','confirmed','confirmed','confirmed','cancelled','confirmed'];
+    var slts  = ['09:00','10:30','15:00','08:30','14:30','16:00','10:00','11:00'];
+    var bks = [];
+    for (var i = 0; i < 8; i++) {
+      var d = addDays(i < 4 ? i+1 : i-3);
+      bks.push({ id:'BK'+String(i+1).padStart(3,'0'), date:d.toISOString().slice(0,10),
+        time:slts[i], service:svcs[i], nome:names[i], tel:tels[i], note:'', status:sts[i] });
+    }
+    return bks;
+  }
+
+  function makeDefaultAvail() {
+    var av = {}, count = 0;
+    for (var i = 1; i <= 14 && count < 7; i++) {
+      var d = addDays(i);
+      if (d.getDay() === 0) continue;
+      var ds = d.toISOString().slice(0,10);
+      av[ds] = { open:true, slots:ALL_SLOTS.filter(function(s){ return s!=='09:30' && s!=='14:00'; }) };
+      count++;
+    }
+    return av;
+  }
+
+  // ── STATE ──
+  var bookings, avail, curFilter = 'all', noteTargetId = null;
+
+  function loadData() {
+    try { var s = localStorage.getItem('amv3_bookings'); bookings = s ? JSON.parse(s) : makeMockBookings(); }
+    catch(e) { bookings = makeMockBookings(); }
+    try { var s2 = localStorage.getItem('amv3_avail'); avail = s2 ? JSON.parse(s2) : makeDefaultAvail(); }
+    catch(e) { avail = makeDefaultAvail(); }
+  }
+  function saveBk() { try { localStorage.setItem('amv3_bookings', JSON.stringify(bookings)); } catch(e){} }
+  function saveAv() { try { localStorage.setItem('amv3_avail', JSON.stringify(avail)); } catch(e){} }
+
+  // ── AUTH ──
+  document.getElementById('lBtn').addEventListener('click', doLogin);
+  document.getElementById('lPwd').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+  document.getElementById('logoutBtn').addEventListener('click', doLogout);
+
+  function doLogin() {
+    var u = document.getElementById('lUser').value.trim();
+    var p = document.getElementById('lPwd').value;
+    var err = document.getElementById('lerr');
+    if (u === 'admin' && p === '1234') {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadData(); renderStats(); renderBookings(); renderAvail();
+    } else {
+      err.textContent = '❌ Credenziali errate. Riprova.';
+      setTimeout(function(){ err.textContent = ''; }, 2500);
+    }
+  }
+  function doLogout() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('lPwd').value = '';
+  }
+
+  // ── TABS ──
+  document.querySelectorAll('.tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var t = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('on', b===btn); });
+      document.getElementById('tabBook').style.display  = t==='book'  ? '' : 'none';
+      document.getElementById('tabAvail').style.display = t==='avail' ? '' : 'none';
+    });
+  });
+
+  // ── STATS ──
+  function renderStats() {
+    var td = today();
+    document.getElementById('stPending').textContent = bookings.filter(function(b){ return b.status==='pending'; }).length;
+    document.getElementById('stToday').textContent   = bookings.filter(function(b){ return b.date===td && b.status==='confirmed'; }).length;
+    document.getElementById('stWeek').textContent    = bookings.filter(function(b){ return b.status!=='cancelled'; }).length;
+    document.getElementById('stTotal').textContent   = bookings.length;
+  }
+
+  // ── BOOKINGS ──
+  document.querySelectorAll('.fc').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      curFilter = btn.dataset.filter;
+      document.querySelectorAll('.fc').forEach(function(b){ b.classList.toggle('on', b===btn); });
+      renderBookings();
+    });
+  });
+
+  function renderBookings() {
+    var list = document.getElementById('bkList');
+    var view = bookings.filter(function(b){ return curFilter==='all' || b.status===curFilter; });
+    if (!view.length) { list.innerHTML = '<div class="empty">Nessuna prenotazione trovata.</div>'; return; }
+    var SL = { pending:'⏳ In attesa', confirmed:'✅ Confermata', cancelled:'❌ Cancellata' };
+    list.innerHTML = view.map(function(b) { return (
+      '<div class="bkcard">' +
+        '<div class="bkinfo">' +
+          '<div class="bkname">' + b.nome + '</div>' +
+          '<div class="bkmeta">' +
+            '<span>📞 ' + b.tel + '</span>' +
+            '<span class="svc-tag">' + b.service + '</span>' +
+            (b.note ? '<span class="note-prev">📝 ' + b.note + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="bkdt">' +
+          '<div class="bkdate">' + fmtDate(b.date) + '</div>' +
+          '<div class="bktime">🕐 ' + b.time + '</div>' +
+          '<span class="sbadge s-' + b.status + '">' + SL[b.status] + '</span>' +
+        '</div>' +
+        '<div class="bkactions">' +
+          (b.status==='pending'   ? '<button class="ab ab-conf" data-id="'+b.id+'" data-action="confirmed">✓ Conferma</button><button class="ab ab-canc" data-id="'+b.id+'" data-action="cancelled">✕ Cancella</button>' : '') +
+          (b.status==='confirmed' ? '<button class="ab ab-canc" data-id="'+b.id+'" data-action="cancelled">✕ Cancella</button>' : '') +
+          (b.status==='cancelled' ? '<button class="ab ab-rest" data-id="'+b.id+'" data-action="confirmed">↩ Ripristina</button>' : '') +
+          '<button class="ab ab-note" data-id="'+b.id+'" data-action="note">📝</button>' +
+        '</div>' +
+      '</div>'
+    ); }).join('');
+
+    list.querySelectorAll('.ab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (btn.dataset.action === 'note') openNote(btn.dataset.id);
+        else changeStatus(btn.dataset.id, btn.dataset.action);
+      });
+    });
+  }
+
+  function changeStatus(id, status) {
+    var bk = bookings.find(function(b){ return b.id===id; });
+    if (bk) { bk.status = status; saveBk(); renderStats(); renderBookings(); }
+  }
+
+  // ── NOTES ──
+  document.getElementById('noteCancelBtn').addEventListener('click', closeNote);
+  document.getElementById('noteSaveBtn').addEventListener('click', saveNote);
+  document.getElementById('noteModal').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeNote(); });
+
+  function openNote(id) {
+    noteTargetId = id;
+    var bk = bookings.find(function(b){ return b.id===id; });
+    document.getElementById('noteTxt').value = bk ? bk.note : '';
+    document.getElementById('noteModal').classList.add('open');
+  }
+  function closeNote() { document.getElementById('noteModal').classList.remove('open'); noteTargetId = null; }
+  function saveNote() {
+    if (!noteTargetId) return;
+    var bk = bookings.find(function(b){ return b.id===noteTargetId; });
+    if (bk) { bk.note = document.getElementById('noteTxt').value.trim(); saveBk(); renderBookings(); }
+    closeNote();
+  }
+
+  // ── DISPONIBILITÀ ──
+  function renderAvail() {
+    var grid = document.getElementById('availGrid');
+    grid.innerHTML = '';
+    var days = [], i = 1;
+    while (days.length < 7 && i <= 14) { var d = addDays(i); if (d.getDay()!==0) days.push(d); i++; }
+    days.forEach(function(d) {
+      var ds = d.toISOString().slice(0,10);
+      if (!avail[ds]) avail[ds] = { open:true, slots:ALL_SLOTS.slice() };
+      var a = avail[ds];
+      var col = document.createElement('div');
+      col.className = 'day-col' + (a.open ? '' : ' closed');
+      var chkId = 'tgl_' + ds;
+      col.innerHTML =
+        '<div class="day-head">' +
+          '<div><div class="day-name">' + WD[d.getDay()] + '</div><div class="day-date">' + d.getDate() + '/' + (d.getMonth()+1) + '</div></div>' +
+          '<label class="tgl"><input type="checkbox" id="' + chkId + '"' + (a.open?' checked':'') + '><span class="ttr"></span></label>' +
+        '</div>' +
+        '<div class="slots">' +
+          ALL_SLOTS.map(function(s){ return '<div class="sc ' + (a.slots.indexOf(s)>=0?'active':'inactive') + '" data-date="'+ds+'" data-slot="'+s+'">' + s + '</div>'; }).join('') +
+        '</div>';
+
+      col.querySelector('#'+chkId).addEventListener('change', function() {
+        avail[ds].open = this.checked;
+        col.classList.toggle('closed', !this.checked);
+        markDirty();
+      });
+      col.querySelectorAll('.sc').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          if (!avail[ds].open) return;
+          var slot = chip.dataset.slot;
+          var idx = avail[ds].slots.indexOf(slot);
+          if (idx >= 0) { avail[ds].slots.splice(idx,1); chip.classList.remove('active'); chip.classList.add('inactive'); }
+          else { avail[ds].slots.push(slot); avail[ds].slots.sort(); chip.classList.remove('inactive'); chip.classList.add('active'); }
+          markDirty();
+        });
+      });
+      grid.appendChild(col);
+    });
+  }
+
+  function markDirty() {
+    var el = document.getElementById('saveTxt');
+    el.textContent = '⚠️ Modifiche non salvate';
+    el.style.color = '#D97706';
+  }
+  document.getElementById('saveBtn').addEventListener('click', function() {
+    saveAv();
+    var el = document.getElementById('saveTxt');
+    el.textContent = '✓ Salvato con successo!';
+    el.style.color = '#16A34A';
+    setTimeout(function(){ el.textContent = 'Modifica gli orari e salva'; el.style.color = ''; }, 2500);
+  });
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
